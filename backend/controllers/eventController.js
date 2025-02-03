@@ -155,8 +155,11 @@ exports.initiateBooking = async (req, res) => {
       eventName: event.name,
     });
   } catch (error) {
+    console.error("Booking Initiation Error:", error);
     console.error(error);
-    res.status(500).json({ error: "Failed to initiate booking" });
+    res
+      .status(500)
+      .json({ error: "Failed to initiate booking", details: error.message });
   }
 };
 

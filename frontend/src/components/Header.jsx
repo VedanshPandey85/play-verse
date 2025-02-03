@@ -17,10 +17,7 @@ const Header = () => {
         <div className="flex items-center">
           <h1 className="font-bebas text-4xl">
             <button onClick={() => handleNavigation()}>
-              <span className="font text-[#202d37]">Play </span>
-              <span className="text-transparent [-webkit-text-stroke:1px_#27262a]">
-                Verse
-              </span>
+              <span className="font text-[#202d37]">SPORTOMIC </span>
             </button>
           </h1>
         </div>

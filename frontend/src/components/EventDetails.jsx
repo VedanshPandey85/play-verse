@@ -57,18 +57,7 @@ const EventDetails = () => {
   }, [eventId]);
 
   const handlePayment = async () => {
-    if (!name || !phone) {
-      alert("Name and phone number are required");
-      return;
-    }
-
     try {
-      // console.log(eventId);
-      // if (!eventId || !event) {
-      //   alert("Event not found");
-      //   return;
-      // }
-
       const response = await fetch(
         `http://localhost:5000/api/events/${eventId}/book`,
         {
@@ -79,26 +68,52 @@ const EventDetails = () => {
           body: JSON.stringify({ name, phone }),
         }
       );
-      // console.log(resp)
-      // const order = await response.json();
-      console.log(order);
-      if (!response.ok) throw new Error("Booking failed");
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Booking failed");
+      }
 
       const order = await response.json();
-      const that = this;
-      console.log(import.meta.env.VITE_RAZORPAY_KEY_ID);
+
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: event.price * 100,
+        amount: order.amount,
         currency: "INR",
-        name: event.name,
+        name: order.eventName,
         description: "Event Booking",
         order_id: order.orderId,
+        prefill: {
+          name: name,
+          contact: phone,
+        },
+
+        method: {
+          upi: 1, // Enable UPI payments
+          netbanking: 1,
+          card: 1,
+          wallet: 1,
+        },
+
+        config: {
+          display: {
+            blocks: {
+              banks: {
+                name: "Most Used Methods",
+                instruments: [{ method: "upi" }, { method: "netbanking" }],
+              },
+            },
+            sequence: ["block.banks"],
+            preferences: {
+              show_default_blocks: false,
+            },
+          },
+        },
+
         handler: async (response) => {
           try {
-            console.log(that.eventId);
             const confirmResponse = await fetch(
-              `http://localhost:5000/api/events/${that.eventId}/confirm`,
+              `http://localhost:5000/api/events/${eventId}/confirm`,
               {
                 method: "POST",
                 headers: {
@@ -114,31 +129,38 @@ const EventDetails = () => {
               }
             );
 
-            if (!confirmResponse.ok)
-              throw new Error("Payment confirmation failed");
+            if (!confirmResponse.ok) {
+              const errorData = await confirmResponse.json();
+              throw new Error(errorData.error || "Payment confirmation failed");
+            }
 
-            // Set payment details and show success modal
+            // Handle successful payment
             setPaymentDetails({
               participantName: name,
               participantPhone: phone,
               paymentId: response.razorpay_payment_id,
             });
             setShowSuccessModal(true);
-
-            // Refresh participants list
             fetchParticipants();
           } catch (error) {
-            alert("Payment confirmation failed");
+            console.error("Confirmation Error:", error);
+            alert(`Payment Confirmation Failed: ${error.message}`);
           }
         },
-        // prefill: { name, contact: phone },
-        // theme: { color: "#3399cc" },
+        theme: {
+          color: "#14B8A6",
+        },
       };
 
       const rzp = new window.Razorpay(options);
       rzp.open();
+
+      rzp.on("payment.failed", function (response) {
+        alert(`Payment Failed: ${response.error.description}`);
+      });
     } catch (error) {
-      alert("Payment initialization failed. Please try again.");
+      console.error("Payment Initialization Error:", error);
+      alert(`Payment Initialization Failed: ${error.message}`);
     }
   };
 
