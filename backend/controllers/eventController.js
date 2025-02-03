@@ -6,14 +6,33 @@ const {
 
 exports.getAllEvents = async (req, res) => {
   try {
-    const events = await Event.find();
-    res.status(200).json(events);
+    const { sport } = req.query;
+    let filter = {};
+
+    // If sport query parameter exists and is not 'all', add it to filter
+    if (sport && sport.toLowerCase() !== "all") {
+      filter.sportsName = sport.toLowerCase();
+    }
+
+    const events = await Event.find(filter);
+    console.log(events);
+
+    // Get unique sports names for reference
+    const allSports = await Event.distinct("sportsName");
+
+    const response = {
+      total: events.length,
+      sport: sport || "all",
+      availableSports: allSports, // This will give you a list of all sports in the system
+      events: events,
+    };
+
+    res.status(200).json(response);
   } catch (error) {
-    console.error(error);
+    console.error("Error in getAllEvents:", error);
     res.status(500).json({ error: "Failed to fetch events" });
   }
 };
-
 exports.getEventById = async (req, res) => {
   const { id } = req.params;
   try {

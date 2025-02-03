@@ -11,18 +11,50 @@ const participantSchema = new mongoose.Schema({
 });
 
 const eventSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  description: { type: String, required: true },
-  date: { type: Date, required: true },
-  slot: { type: String, required: true },
-  participantsLimit: { type: Number, required: true },
-  participants: [participantSchema], // Participants are stored as subdocuments
-  price: { type: Number, required: true }, // Price field
-  sportsName: { type: String, required: true },
-  venueName: { type: String, required: true }, // New venue name field
-  venueImage: { type: String }, // New venue image field (optional)
-  location: { type: String, required: true },
+  name: {
+    type: String,
+    required: true,
+  },
+  description: {
+    type: String,
+    required: true,
+  },
+  date: {
+    type: Date,
+    required: true,
+  },
+  slot: {
+    type: String,
+    required: true,
+  },
+  participantsLimit: {
+    type: Number,
+    required: true,
+  },
+  participants: [participantSchema],
+  price: {
+    type: Number,
+    required: true,
+  },
+  sportsName: {
+    type: String,
+    required: true,
+    lowercase: true, // This will automatically convert to lowercase
+  },
+  venueName: {
+    type: String,
+    required: true,
+  },
+  venueImage: {
+    type: String,
+  },
+  location: {
+    type: String,
+    required: true,
+  },
 });
 
-// Export the model
+// Add an index on sportsName for better query performance
+eventSchema.index({ sportsName: 1 });
+
 module.exports = mongoose.model("Event", eventSchema);

@@ -22,7 +22,6 @@ const EventDetails = () => {
         if (!response.ok) throw new Error("Failed to fetch event details");
         const data = await response.json();
         setEvent(data);
-        // console.log(data);
       } catch (error) {
         setError(error.message);
       } finally {
@@ -43,6 +42,7 @@ const EventDetails = () => {
       );
       if (!response.ok) throw new Error("Failed to fetch participants");
       const data = await response.json();
+
       setParticipants(data.successfulPayments);
       // console.log(data);
     } catch (error) {
@@ -63,6 +63,12 @@ const EventDetails = () => {
     }
 
     try {
+      // console.log(eventId);
+      // if (!eventId || !event) {
+      //   alert("Event not found");
+      //   return;
+      // }
+
       const response = await fetch(
         `http://localhost:5000/api/events/${eventId}/book`,
         {
@@ -73,11 +79,14 @@ const EventDetails = () => {
           body: JSON.stringify({ name, phone }),
         }
       );
-
+      // console.log(resp)
+      // const order = await response.json();
+      console.log(order);
       if (!response.ok) throw new Error("Booking failed");
 
       const order = await response.json();
-
+      const that = this;
+      console.log(import.meta.env.VITE_RAZORPAY_KEY_ID);
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: event.price * 100,
@@ -87,8 +96,9 @@ const EventDetails = () => {
         order_id: order.orderId,
         handler: async (response) => {
           try {
+            console.log(that.eventId);
             const confirmResponse = await fetch(
-              `http://localhost:5000/api/events/${eventId}/confirm`,
+              `http://localhost:5000/api/events/${that.eventId}/confirm`,
               {
                 method: "POST",
                 headers: {
@@ -178,7 +188,7 @@ const EventDetails = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <span className="font-semibold">
-                  {new Date(event.date).toLocaleDateString()}
+                  {new Date(event.date).toLocaleDateString("en-GB")}
                 </span>
               </div>
               <div className="flex items-center space-x-2">
@@ -239,7 +249,7 @@ const EventDetails = () => {
               <div>
                 <span className="text-sm text-gray-600">TOTAL</span>
                 <div className="text-2xl font-bold text-gray-900">
-                  INR {event.price}.00
+                  INR {event.price}
                 </div>
               </div>
               <button
@@ -265,25 +275,33 @@ const EventDetails = () => {
             <div className="p-4 sm:p-6 md:p-8">
               <h2 className="text-xl font-semibold mb-4">Participants</h2>
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full table-auto">
                   <thead>
-                    <tr className="bg-gray-50">
+                    <tr className="bg-gray-100">
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
                         Name
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
-                        Phone
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {participants.map((participant, index) => (
-                      <tr key={index}>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          {participant.name}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          {participant.phone}
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-lg text-gray-900 flex items-center">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            className="h-5 w-5 mr-2 text-teal-500"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M12 2a4 4 0 110 8 4 4 0 010-8zm0 14c-3.313 0-6 2.687-6 6h12c0-3.313-2.687-6-6-6z"
+                            />
+                          </svg>
+                          <span>{participant.name}</span>
                         </td>
                       </tr>
                     ))}

@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/SignUpPage";
 import AdminPage from "./pages/AdminPage";
 import ContactUs from "./pages/ContactUs";
+// import cookies from "js-cookie";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/events" element={<Events />} />
             <Route path="/add-event" element={<AddEvent />} />
+            <Route path="/event/:eventId" element={<EventDetails />} />
             <Route path="/event/:eventId" element={<EventDetails />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
@@ -40,3 +42,10 @@ function App() {
 }
 
 export default App;
+
+/**
+ * First create an Auth context
+ *
+ * user, ....
+ *
+ */
