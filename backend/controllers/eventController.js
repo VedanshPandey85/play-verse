@@ -25,15 +25,72 @@ exports.getEventById = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch event" });
   }
 };
+//get user based over successfull payment based on event id
+exports.getSuccessfulPayments = async (req, res) => {
+  const { id } = req.params; // Event ID
+
+  try {
+    // Find the event by ID
+    const event = await Event.findById(id);
+
+    if (!event) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    // const totalSuccessfulPayments = event.participants.filter(
+    //   (participant) => participant.paymentStatus === "success"
+    // ).length;
+
+    // Filter participants with successful payment status
+    const successfulPayments = event.participants.filter(
+      (participant) => participant.paymentStatus === "success"
+    );
+
+    // const slotsLeft = event.participantsLimit - totalSuccessfulPayments;
+
+    res.status(200).json({
+      eventName: event.name,
+      // slotsLeft,
+      totalSuccessfulPayments: successfulPayments.length,
+      successfulPayments,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch successful payments" });
+  }
+};
 
 exports.createEvent = async (req, res) => {
-  const { name, description, date, slot, participantsLimit, price } = req.body;
+  const {
+    name,
+    description,
+    date,
+    slot,
+    participantsLimit,
+    price,
+    venueName,
+    venueImage,
+    location,
+    sportsName,
+  } = req.body;
 
-  if (!name || !description || !date || !slot || !participantsLimit || !price) {
-    return res.status(400).send("Please provide all fields");
+  // Check for required fields
+  if (
+    !name ||
+    !description ||
+    !date ||
+    !slot ||
+    !participantsLimit ||
+    !price ||
+    !venueName || // Venue name is required
+    !location || // Location is required
+    !sportsName // Sports name is required
+  ) {
+    return res.status(400).send("Please provide all required fields");
   }
 
   try {
+    // Create a new event
     const event = new Event({
       name,
       description,
@@ -41,8 +98,15 @@ exports.createEvent = async (req, res) => {
       slot,
       participantsLimit,
       price,
+      venueName,
+      venueImage, // Include the optional venue image
+      location, // Include location field
+      sportsName, // Include sports name field
     });
+
+    // Save the event to the database
     await event.save();
+
     res.status(201).json({ message: "Event Created Successfully", event });
   } catch (error) {
     console.error(error);

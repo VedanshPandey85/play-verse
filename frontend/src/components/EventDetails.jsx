@@ -1,36 +1,61 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { useParams } from "react-router-dom";
+import PaymentSuccessModal from "./PaymentSuccessModal";
 
 const EventDetails = () => {
-  const { eventId } = useParams(); // Fetch the eventId from URL params
-  const [event, setEvent] = useState(null); // State to hold event details
-  const [name, setName] = useState(""); // State to handle participant's name
-  const [phone, setPhone] = useState(""); // State to handle participant's phone number
+  const eventId = window.location.pathname.split("/").pop();
+  const [event, setEvent] = useState(null);
+  const [participants, setParticipants] = useState([]);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState(null);
 
+  // Fetch event details
   useEffect(() => {
-    // Fetch event details when the component is mounted
     const fetchEventDetails = async () => {
       try {
-        const response = await axios.get(
+        const response = await fetch(
           `http://localhost:5000/api/events/${eventId}`
         );
-        setEvent(response.data); // Update state with event details
-        console.log(response.data); // Log event details for debugging
+        if (!response.ok) throw new Error("Failed to fetch event details");
+        const data = await response.json();
+        setEvent(data);
+        // console.log(data);
       } catch (error) {
-        console.error("Error fetching event details:", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
-    // Fetch event details only if eventId exists
     if (eventId) {
       fetchEventDetails();
-    } else {
-      alert("Event ID is missing");
     }
   }, [eventId]);
 
-  // Handle payment logic
+  // Fetch participants data
+  const fetchParticipants = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/events/${eventId}/successful-payments`
+      );
+      if (!response.ok) throw new Error("Failed to fetch participants");
+      const data = await response.json();
+      setParticipants(data.successfulPayments);
+      // console.log(data);
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+
+  useEffect(() => {
+    if (eventId) {
+      fetchParticipants();
+    }
+  }, [eventId]);
+
   const handlePayment = async () => {
     if (!name || !phone) {
       alert("Name and phone number are required");
@@ -38,142 +63,243 @@ const EventDetails = () => {
     }
 
     try {
-      // Request to backend to create Razorpay order
-      const orderResponse = await axios.post(
+      const response = await fetch(
         `http://localhost:5000/api/events/${eventId}/book`,
         {
-          name: name, // Send participant's name
-          phone: phone, // Send participant's phone number
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name, phone }),
         }
       );
 
-      const order = orderResponse.data; // Retrieve order details
-      console.log(order);
+      if (!response.ok) throw new Error("Booking failed");
+
+      const order = await response.json();
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Your Razorpay Key ID from .env
-        amount: event.price * 100, // Price in paise (multiply by 100)
-        currency: "INR", // Currency code
-        name: event.name, // Event name
-        description: "Event Booking", // Description of the payment
-        order_id: order.orderId, // Order ID from backend
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: event.price * 100,
+        currency: "INR",
+        name: event.name,
+        description: "Event Booking",
+        order_id: order.orderId,
         handler: async (response) => {
           try {
-            const confirmResponse = await axios.post(
+            const confirmResponse = await fetch(
               `http://localhost:5000/api/events/${eventId}/confirm`,
               {
-                paymentId: response.razorpay_payment_id,
-                razorpayOrderId: response.razorpay_order_id, // Add Razorpay order ID
-                razorpaySignature: response.razorpay_signature, // Add Razorpay signature
-                participantName: name,
-                participantPhone: phone,
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  paymentId: response.razorpay_payment_id,
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpaySignature: response.razorpay_signature,
+                  participantName: name,
+                  participantPhone: phone,
+                }),
               }
             );
-            console.log(confirmResponse); // Log the full response to check status
-            alert("Payment successful and booking confirmed!");
+
+            if (!confirmResponse.ok)
+              throw new Error("Payment confirmation failed");
+
+            // Set payment details and show success modal
+            setPaymentDetails({
+              participantName: name,
+              participantPhone: phone,
+              paymentId: response.razorpay_payment_id,
+            });
+            setShowSuccessModal(true);
+
+            // Refresh participants list
+            fetchParticipants();
           } catch (error) {
-            console.error(
-              "Error confirming payment:",
-              error.response ? error.response.data : error
-            );
             alert("Payment confirmation failed");
           }
         },
-        prefill: {
-          name: name,
-          contact: phone,
-        },
-        theme: {
-          color: "#3399cc", // Razorpay theme color
-        },
+        // prefill: { name, contact: phone },
+        // theme: { color: "#3399cc" },
       };
 
-      const rzp = new window.Razorpay(options); // Use `window.Razorpay` to open the Razorpay checkout
-      rzp.open(); // Open Razorpay payment modal
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (error) {
-      console.error("Error during payment:", error);
       alert("Payment initialization failed. Please try again.");
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading event details...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg text-red-600">Error: {error}</div>
+      </div>
+    );
+  }
+
+  if (!event) return null;
+
   return (
-    <div className="container mx-auto p-6">
-      {event ? (
-        <>
-          <h2 className="text-3xl font-semibold mb-4">{event.name}</h2>
-          <p>{event.description}</p>
-          <p>
-            <strong>Date:</strong> {new Date(event.date).toLocaleString()}
-          </p>
-          <p>
-            <strong>Slot:</strong> {event.slot}
-          </p>
-          <div className="mt-6">
-            <h3 className="text-2xl font-medium mb-4">Book Now</h3>
-            <form>
-              <div className="mb-4">
-                <label className="block mb-2">Name</label>
-                <input
-                  type="text"
-                  className="w-full p-2 border border-gray-300 rounded"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
+    <div className="min-h-screen bg-gray-50 mt-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        {/* Single Image */}
+        {event.venueImage && (
+          <div className="mb-6 md:mb-8 rounded-lg overflow-hidden shadow-lg">
+            <img
+              src={event.venueImage}
+              alt="Venue"
+              className="w-full h-48 sm:h-64 md:h-96 object-cover"
+            />
+          </div>
+        )}
+
+        {/* Event Details Card */}
+        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          <div className="p-4 sm:p-6 md:p-8">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+              {event.name}
+            </h1>
+
+            {/* Event Info */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              <div className="flex items-center space-x-2">
+                <span className="font-semibold">{event.sportsName}</span>
               </div>
-              <div className="mb-4">
-                <label className="block mb-2">Phone</label>
-                <input
-                  type="tel"
-                  className="w-full p-2 border border-gray-300 rounded"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                />
+              <div className="flex items-center space-x-2">
+                <span className="font-semibold">
+                  {new Date(event.date).toLocaleDateString()}
+                </span>
               </div>
-              <div className="mb-4">
-                <label className="block mb-2">Price</label>
-                <p>{event.price} INR</p>
+              <div className="flex items-center space-x-2">
+                <span className="text-gray-600">{event.slot}</span>
+              </div>
+            </div>
+
+            {/* Instructions */}
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold mb-3">
+                Important Instructions
+              </h2>
+              <ul className="space-y-2 text-gray-600">
+                <li className="flex items-start">
+                  <span className="mr-2">•</span>
+                  Have everything clean & mandatory normal shoes are not allowed
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2">•</span>
+                  Maintain decorum as per your sportmanship
+                </li>
+              </ul>
+            </div>
+
+            {/* Payment Form */}
+            <div className="bg-gray-50 rounded-lg p-4 md:p-6 mb-6">
+              <h2 className="text-lg font-semibold mb-4">Payment Details</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone
+                  </label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Total and Button */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+              <div>
+                <span className="text-sm text-gray-600">TOTAL</span>
+                <div className="text-2xl font-bold text-gray-900">
+                  INR {event.price}.00
+                </div>
               </div>
               <button
-                type="button"
                 onClick={handlePayment}
-                className="w-full py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition"
+                className={`w-full sm:w-auto px-8 py-3 rounded-lg font-medium ${
+                  event.participants.length === event.participantsLimit
+                    ? "bg-gray-400 text-gray-800 cursor-not-allowed"
+                    : "bg-teal-600 text-white hover:bg-teal-700"
+                }`}
+                disabled={event.participants.length === event.participantsLimit}
               >
-                Pay Now
+                {event.participants.length === event.participantsLimit
+                  ? "No Slots Left"
+                  : "Book Now"}
               </button>
-            </form>
-          </div>
-          {/* Participants List */}
-          {event.participants && event.participants.length > 0 && (
-            <div className="mt-8">
-              <h3 className="text-2xl font-medium mb-4">Participants</h3>
-              <table className="w-full border-collapse border border-gray-300">
-                <thead>
-                  <tr>
-                    <th className="border border-gray-300 px-4 py-2">Name</th>
-                    <th className="border border-gray-300 px-4 py-2">Phone</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {event.participants.map((participant, index) => (
-                    <tr key={index}>
-                      <td className="border border-gray-300 px-4 py-2">
-                        {participant.name}
-                      </td>
-                      <td className="border border-gray-300 px-4 py-2">
-                        {participant.phone}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
-          )}
-        </>
-      ) : (
-        <p>Loading event details...</p>
-      )}
+          </div>
+        </div>
+
+        {/* Participants Table */}
+        {participants.length > 0 && (
+          <div className="mt-8 bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="p-4 sm:p-6 md:p-8">
+              <h2 className="text-xl font-semibold mb-4">Participants</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
+                        Name
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
+                        Phone
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {participants.map((participant, index) => (
+                      <tr key={index}>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {participant.name}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {participant.phone}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      <PaymentSuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        paymentDetails={paymentDetails}
+        event={event}
+      />
     </div>
   );
 };

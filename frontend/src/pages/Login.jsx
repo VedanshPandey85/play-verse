@@ -1,5 +1,6 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode"; // Use named import here
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
@@ -11,6 +12,7 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
+      console.log("Sending login request...");
       const response = await axios.post(
         "http://localhost:5000/api/auth/login",
         {
@@ -19,64 +21,75 @@ const Login = () => {
         }
       );
 
-      localStorage.setItem("token", response.data.token); // Store token in localStorage
-      // Check if user is an admin and navigate accordingly
-      const decodedToken = jwt_decode(response.data.token);
+      const token = response.data.token;
+      console.log("Received Token:", token);
+      localStorage.setItem("token", token);
+
+      console.log("Decoding token...");
+      const decodedToken = jwtDecode(token); // Use the named export here
+      console.log("Decoded Token:", decodedToken);
+
       if (decodedToken.role === "admin") {
         navigate("/admin");
       } else {
-        navigate("/user");
+        navigate("/");
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong.");
+      console.error("Error:", err);
+      setError("Something went wrong!");
     }
   };
 
   return (
-    <div className="max-w-sm mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold text-center mb-4">Login</h2>
-      {error && <p className="text-red-500 text-center mb-2">{error}</p>}
-      <form onSubmit={handleLogin}>
-        <div className="mb-4">
-          <label htmlFor="username" className="block text-gray-700">
-            Username
-          </label>
-          <input
-            type="text"
-            id="username"
-            className="w-full p-2 border border-gray-300 rounded"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label htmlFor="password" className="block text-gray-700">
-            Password
-          </label>
-          <input
-            type="password"
-            id="password"
-            className="w-full p-2 border border-gray-300 rounded"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        <button
-          type="submit"
-          className="w-full p-2 bg-blue-500 text-white rounded"
+    <form
+      onSubmit={handleLogin}
+      className="max-w-md mx-auto mt-20 bg-white shadow-lg rounded-lg p-6 space-y-6"
+    >
+      <h2 className="text-2xl font-bold text-gray-800 text-center">Login</h2>
+
+      <div>
+        <label
+          htmlFor="username"
+          className="block text-sm font-medium text-gray-600"
         >
-          Login
-        </button>
-      </form>
-      <p className="mt-4 text-center">
-        Don't have an account?{" "}
-        <a href="/signup" className="text-blue-500">
-          Sign up
-        </a>
-      </p>
-    </div>
+          Username
+        </label>
+        <input
+          id="username"
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Enter your username"
+          className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:ring focus:ring-blue-200 focus:outline-none"
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="password"
+          className="block text-sm font-medium text-gray-600"
+        >
+          Password
+        </label>
+        <input
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Enter your password"
+          className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:ring focus:ring-blue-200 focus:outline-none"
+        />
+      </div>
+
+      <button
+        type="submit"
+        className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:ring focus:ring-blue-300 focus:outline-none transition duration-200"
+      >
+        Login
+      </button>
+
+      {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+    </form>
   );
 };
 

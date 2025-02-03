@@ -28,7 +28,7 @@ const Signup = () => {
   };
 
   return (
-    <div className="max-w-sm mx-auto p-6 bg-white rounded-lg shadow-md">
+    <div className="max-w-sm mx-auto mt-20 p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold text-center mb-4">Sign Up</h2>
       {error && <p className="text-red-500 text-center mb-2">{error}</p>}
       <form onSubmit={handleSignup}>

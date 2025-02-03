@@ -17,7 +17,11 @@ const eventSchema = new mongoose.Schema({
   slot: { type: String, required: true },
   participantsLimit: { type: Number, required: true },
   participants: [participantSchema], // Participants are stored as subdocuments
-  price: { type: Number, required: true }, // Added price field
+  price: { type: Number, required: true }, // Price field
+  sportsName: { type: String, required: true },
+  venueName: { type: String, required: true }, // New venue name field
+  venueImage: { type: String }, // New venue image field (optional)
+  location: { type: String, required: true },
 });
 
 // Export the model

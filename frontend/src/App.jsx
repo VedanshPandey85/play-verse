@@ -11,6 +11,7 @@ import EventDetails from "./components/EventDetails";
 import Login from "./pages/Login";
 import Signup from "./pages/SignUpPage";
 import AdminPage from "./pages/AdminPage";
+import ContactUs from "./pages/ContactUs";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
             <Route path="/admin" element={<AdminPage />} />
+            <Route path="/contact" element={<ContactUs />} />
 
             {/* <Route path="*" element={<h1>Not Found</h1>} /> */}
           </Routes>

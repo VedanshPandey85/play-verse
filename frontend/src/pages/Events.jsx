@@ -1,13 +1,15 @@
 import React from "react";
 import EventImages from "../components/EventImages";
-import BookingForm from "../components/BookingForm";
+// import BookingForm from "../components/BookingForm";
 import EventList from "../components/EventList";
+import BookingCard from "../components/BookingCard";
 
 const Events = () => {
   return (
     <>
-      <EventImages />
+      {/* <BookingCard /> */}
       <EventList />
+      {/* <EventImages /> */}
     </>
     // <div className="flex flex-col min-h-screen">
     //   {/* Top Half: Event Images */}

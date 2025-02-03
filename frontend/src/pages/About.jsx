@@ -1,41 +1,75 @@
 import React from "react";
+import img1 from "../assets/images/i1_booking.jpg";
+import img2 from "../assets/images/i1_coaching.jpg";
+import img3 from "../assets/images/i1.jpg";
 
-const About = () => {
+const AboutUs = () => {
   return (
-    <>
-      <section class="py-24 relative">
-        <div class="w-full max-w-7xl px-4 md:px-5 lg:px-5 mx-auto">
-          <div class="w-full justify-start items-center gap-8 grid lg:grid-cols-2 grid-cols-1">
-            <div class="w-full flex-col justify-start lg:items-start items-center gap-10 inline-flex">
-              <div class="w-full flex-col justify-start lg:items-start items-center gap-4 flex">
-                <h2 class="text-gray-900 text-4xl font-bold font-manrope leading-normal lg:text-start text-center">
-                  Building Stronger Communities through Collaboration and
-                  Empowerment
-                </h2>
-                <p class="text-gray-500 text-base font-normal leading-relaxed lg:text-start text-center">
-                  Through collaborationperse perspectives and strengths are
-                  leveraged to create inclusive environments where everyone has
-                  the opportunity to thrive. This approach not only fosters
-                  personal growth and achievement but also strengthens the
-                  fabric of society.
-                </p>
-              </div>
-              <button class="sm:w-fit w-full px-3.5 py-2 bg-indigo-600 hover:bg-indigo-800 transition-all duration-700 ease-in-out rounded-lg shadow-[0px_1px_2px_0px_rgba(16,_24,_40,_0.05)] justify-center items-center flex">
-                <span class="px-1.5 text-white text-sm font-medium leading-6">
-                  Get Started
-                </span>
-              </button>
-            </div>
-            <img
-              class="lg:mx-0 mx-auto h-full rounded-3xl object-cover"
-              src="https://pagedone.io/asset/uploads/1717751272.png"
-              alt="about Us image"
-            />
-          </div>
+    <div className="p-6 sm:p-12 mt-20 bg-gray-100">
+      {/* Heading Section */}
+      <h1 className="text-3xl sm:text-5xl font-bold text-center mb-6 text-gray-800">
+        About Us
+      </h1>
+
+      {/* Textual Content */}
+      <p className="text-lg sm:text-xl text-gray-600 text-center mb-12 max-w-3xl mx-auto">
+        Sportomic makes it easy to play your favorite sport — anytime, anywhere.
+        Find nearby venues, join sports events, connect with playmates and
+        coaches, and explore updates, gear, and more—all in one place.
+      </p>
+
+      {/* Card Section */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Card 1 */}
+        <div className="bg-white shadow-md rounded-lg p-6 flex flex-col items-center">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            Book sports venue
+          </h2>
+          <img
+            src={img1}
+            alt="Book Sports Venue"
+            className="rounded-md mb-4 object-cover h-40 w-full"
+          />
+          <p className="text-gray-600 text-center">
+            Easily find and book top-rated courts, playgrounds, and arenas near
+            you.
+          </p>
         </div>
-      </section>
-    </>
+
+        {/* Card 2 */}
+        <div className="bg-white shadow-md rounded-lg p-6 flex flex-col items-center">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            Coaching assistance
+          </h2>
+          <img
+            src={img2}
+            alt="Coaching Assistance"
+            className="rounded-md mb-4 object-cover h-40 w-full"
+          />
+          <p className="text-gray-600 text-center">
+            Connect with certified coaches for expert tips on fitness,
+            nutrition, and skills to up your game.
+          </p>
+        </div>
+
+        {/* Card 3 */}
+        <div className="bg-white shadow-md rounded-lg p-6 flex flex-col items-center">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            Stay Updated
+          </h2>
+          <img
+            src={img3}
+            alt="Stay Updated"
+            className="rounded-md mb-4 object-cover h-40 w-full"
+          />
+          <p className="text-gray-600 text-center">
+            Explore sports news, join discussions, and share your thoughts with
+            a passionate sports community.
+          </p>
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default About;
+export default AboutUs;

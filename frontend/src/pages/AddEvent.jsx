@@ -1,8 +1,10 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Button, Input, Select, Option } from "@material-tailwind/react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer, Bounce } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const AddEvent = () => {
   const {
@@ -13,65 +15,40 @@ const AddEvent = () => {
   } = useForm();
   const navigate = useNavigate();
 
-  // Verify admin authorization
-  useEffect(() => {
-    const verifyAdmin = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          alert("Unauthorized! Please log in as an admin.");
-          navigate("/login");
-          return;
-        }
-
-        // Send a verification request to the backend
-        const response = await axios.get(
-          "http://localhost:5000/api/events/login",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.data.isAdmin) {
-          alert("Access denied! You are not authorized to create events.");
-          navigate("/login");
-        }
-      } catch (error) {
-        console.error("Authorization error:", error);
-        alert("Session expired or unauthorized access.");
-        navigate("/login");
-      }
-    };
-
-    verifyAdmin();
-  }, [navigate]);
-
   // Submit handler for form data
   const onSubmit = async (data) => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Unauthorized! Please log in as an admin.");
-        navigate("/login");
-        return;
-      }
-
-      await axios.post("http://localhost:5000/api/events", data, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      await axios.post("http://localhost:5000/api/events/add-event", data);
+      toast.success("🎉 Event created successfully!", {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+        transition: Bounce,
+        onClose: () => navigate("/events"),
       });
-      alert("Event Created Successfully");
     } catch (error) {
       console.error("Error creating event:", error);
-      alert("Failed to create event. Please try again.");
+      toast.error("❌ Failed to create event. Please try again.", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+        transition: Bounce,
+      });
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto my-8 p-6 bg-white shadow-lg rounded-xl">
+    <div className="max-w-3xl mx-auto mt-20 my-8 p-6 bg-white shadow-lg rounded-xl">
       <h2 className="text-3xl font-semibold text-center mb-6">
         Create a New Event
       </h2>
@@ -92,6 +69,23 @@ const AddEvent = () => {
             <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
           )}
         </div>
+        <div>
+          <label htmlFor="sportsName" className="block text-sm font-medium">
+            Sports Name
+          </label>
+          <Input
+            id="sportsName"
+            type="text"
+            placeholder="Enter Sports Name"
+            {...register("sportsName", { required: "Sports name is required" })}
+            className="w-full mt-2"
+          />
+          {errors.sportsName && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.sportsName.message}
+            </p>
+          )}
+        </div>
 
         {/* Description */}
         <div>
@@ -110,6 +104,66 @@ const AddEvent = () => {
           {errors.description && (
             <p className="text-red-500 text-xs mt-1">
               {errors.description.message}
+            </p>
+          )}
+        </div>
+
+        {/* Venue Name */}
+        <div>
+          <label htmlFor="venueName" className="block text-sm font-medium">
+            Venue Name
+          </label>
+          <Input
+            id="venueName"
+            type="text"
+            placeholder="Enter Venue Name"
+            {...register("venueName", { required: "Venue name is required" })}
+            className="w-full mt-2"
+          />
+          {errors.venueName && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.venueName.message}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="location" className="block text-sm font-medium">
+            Venue Location
+          </label>
+          <Input
+            id="location"
+            type="text"
+            placeholder="Enter Venue Location"
+            {...register("location", {
+              required: "Venue location is required",
+            })}
+            className="w-full mt-2"
+          />
+          {errors.location && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.location.message}
+            </p>
+          )}
+        </div>
+
+        {/* Venue Image */}
+        <div>
+          <label htmlFor="venueImage" className="block text-sm font-medium">
+            Venue Image Address (URL)
+          </label>
+          <Input
+            id="venueImage"
+            type="text"
+            placeholder="Enter Image URL"
+            {...register("venueImage", {
+              required: "Venue image URL is required",
+            })}
+            className="w-full mt-2"
+          />
+          {errors.venueImage && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.venueImage.message}
             </p>
           )}
         </div>
@@ -142,7 +196,12 @@ const AddEvent = () => {
             render={({ field }) => (
               <Select {...field} className="w-full mt-2">
                 {[
-                  /* Slots omitted for brevity */
+                  "10:00 AM - 12:00 PM",
+                  "12:00 PM - 2:00 PM",
+                  "2:00 PM - 4:00 PM",
+                  "4:00 PM - 6:00 PM",
+                  "6:00 PM - 8:00 PM",
+                  "8:00 PM - 10:00 PM",
                 ].map((slot, index) => (
                   <Option key={index} value={slot}>
                     {slot}
@@ -205,6 +264,7 @@ const AddEvent = () => {
           Create Event
         </Button>
       </form>
+      <ToastContainer />
     </div>
   );
 };
